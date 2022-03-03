@@ -45,8 +45,8 @@ u_expr = Expression ( "(exp(-x[0]/%e)-1)/(exp(-1/%e)-1) - (1/2)*(erf((x[0] + %e)
 
 
 #5. Define bilinear form
-a = ( - u.dx(0) * v + mu * u.dx(0) * v.dx(0) ) * dx
-L = ((u - u_n)/dt) * v * dx
+F = ( ((u - u_n)/dt) * v  - u.dx(0) * v + mu * u.dx(0) * v.dx(0) ) * dx
+#L = f * v * dx
 
 #6. Define boundary conditions
 def boundary ( x ):
@@ -62,7 +62,7 @@ u_exact = interpolate(u_expr, V)
 
 for i in range(m):
   print(i)
-  solve( a == L, u_s, bc)
+  solve( F == 0, u_s, bc)
   u_n.assign(u)
   t += dt
 
