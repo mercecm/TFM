@@ -80,12 +80,10 @@ i = 0
 
 while t<T:
   solve( F == 0 , u, bc)
-  u_n.assign(u)
-
   flux = project(mu*u.dx(0)+u,FunctionSpace(mesh, 'CG', 2))
 
-  flux_vector_n = flux.vector()
-  flux_n[i] = flux_vector_n[0]
+  u_n.assign(u)
+  flux_n[i] = flux(0.05)
   i += 1
   t += dt
   
