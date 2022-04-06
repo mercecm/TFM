@@ -9,7 +9,7 @@ from scipy.special import erfc
 def create_mesh(N):
   mesh = UnitIntervalMesh(N)
   x = mesh.coordinates()
-  x[:] = x[:]**2
+  x[:] = x[:]**4
   return mesh
 
 
@@ -35,10 +35,11 @@ u_n = Function(V)
 f = Constant(0.0)
 u_n.interpolate(Constant(1.0))
 
-L = Constant(0.05)
-w = Constant(0.16E-6)
-D = Constant(4.3E-11)
-mu = Expression("%e/(%e*%e)" %(D,L,w), degree = 10) 
+L = 0.05
+w = 0.16E-6
+D = 4.3E-11
+mu = D/(L*w)
+#mu = 0.1
 
 #4. Define bilinear form
 F = ( u.dx(0)*v - mu*u.dx(0)*v.dx(0) - ((u - u_n)/dt)*v - f*v )*dx
@@ -58,9 +59,9 @@ x0 = 0.0
 x1 = 0.005
 x2 = 0.03
 i = 0
-flux_0 = [None]*m
-flux_1 = [None]*m
-flux_2 = [None]*m
+flux_0 = [None]*(m+1)
+flux_1 = [None]*(m+1)
+flux_2 = [None]*(m+1)
 
 while t<T:
   solve( F == 0 , u, bc)
@@ -102,7 +103,7 @@ plt.savefig ( filename )
 print ( '  Graphics saved as "%s"' % ( filename ) )
 plt.close ( )
 
-t = np.linspace(0, T, num = m)
+t = np.linspace(0, T, num = m+1)
 fig = plt.figure ( )
 ax = plt.subplot ( 111 )
 plt.plot (t, flux_0, label = 'x = %.1f' %x0)
