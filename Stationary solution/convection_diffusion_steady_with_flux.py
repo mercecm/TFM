@@ -1,11 +1,12 @@
 #! /usr/bin/env python3
 #
 from dolfin import *
+import csv
 
 def mesh(n):
   m = UnitIntervalMesh(n)
   x = m.coordinates()
-#  x[:] = x[:]**2
+  x[:] = x[:]**2
   return m
 
 def convection_diffusion ( my_mu, my_grid ):
@@ -38,13 +39,12 @@ def convection_diffusion ( my_mu, my_grid ):
 #
 #  Modified:
 #
-#    16 February 2022
+#    03 March 2022
 #
 #  Author:
 #
 #    John Burkardt
 #    Modified by Mercè Clua
-#
 #
 #  Reference:
 #
@@ -64,11 +64,12 @@ def convection_diffusion ( my_mu, my_grid ):
 #
   print ( '' )
   print ( '  Unit interval mesh n = %d' % ( my_grid ) )
-  my_mesh = mesh ( my_grid )
+  my_mesh = mesh( my_grid )
 #
 #  Set the function space.
 #
-  V = FunctionSpace ( my_mesh, 'CG', 2 )
+  degree = 2
+  V = FunctionSpace ( my_mesh, 'CG', degree )
 #
 #  Set the trial and test functions.
 #
@@ -115,21 +116,54 @@ def convection_diffusion ( my_mu, my_grid ):
 #  Project the exact solution.
 #
   u_exact = interpolate ( u_expr, V )
+
+# Calculate the flux of particles which is even harder than the concentration
+# by Jordi Faraudo 
+  #diffusive flux
+  #flux = project(my_mu*uh.dx(0),FunctionSpace(my_mesh, 'CG', 1)) 
+  #total flux in dimensionless units
+  flux = project(-my_mu*uh.dx(0)-uh, V)
+  flux_expr = Constant ( -1.0 )
+  flux_exact = interpolate (flux_expr,V)
 #
-#  Plot the solution.
+#  Plot the solution (concentration).
 #
-  fig = plt.figure ( )
-  ax = plt.subplot ( 111 )
-  plot (uh, label = 'Computed' )
-  plot (u_exact, label = 'Exact' )
-  ax.legend ( )
-  ax.grid ( True )
-  plt.title ( 'convection_diffusion solutions, grid %d' % ( my_grid ) )
-  filename = ( 'convection_diffusion_solutions_grid%d_2.png' % ( my_grid ) )
-  plt.savefig ( filename )
-  print ( '  Graphics saved as "%s"' % ( filename ) )
-  plt.close ( )
+#  fig = plt.figure ( )
+#  ax = plt.subplot ( 111 )
+#  plot (uh, label = 'Computed' )
+#  plot (u_exact, label = 'Exact' )
+#  ax.legend ( )
+#  ax.grid ( True )
+#  plt.title ( 'convection_diffusion solutions, grid %d' % ( my_grid ) )
+#  filename = ( 'convection_diffusion_solutions_1_grid%d.png' % ( my_grid ) )
+#  plt.savefig ( filename )
+#  print ( '  Graphics saved as "%s"' % ( filename ) )
+#  plt.close ( )
 #
+#  Plot also the flux of particles 
+#
+#  fig = plt.figure ( )
+#  ax = plt.subplot ( 111 )
+#  plot (flux, label = 'Computed' )
+#  plot (flux_exact, label = 'Exact (1.0)' )
+#  ax.legend ( )
+#  ax.grid ( True )
+#  plt.title ( 'Flux, grid %d' % ( my_grid ) )
+#  filename = ( 'Flux_1_grid%d.png' % ( my_grid ) )
+#  plt.savefig ( filename )
+#  print ( '  Graphics saved as "%s"' % ( filename ) )
+#  plt.close ( )
+#
+# Save also to csv
+# by Mercè Clua
+  x_coord = V.tabulate_dof_coordinates()
+  everything = zip(x_coord,uh.vector(),u_exact.vector(),flux.vector(),flux_exact.vector())
+  f = open('Computed_%d_grid%d.csv' % (degree, my_grid), 'w')
+  writer = csv.writer(f, delimiter = '\t')
+  writer.writerows(everything)
+  
+
+
 #  Terminate.
 #
   return
@@ -175,9 +209,9 @@ def convection_diffusion_test ( ):
   print ( '  u(0) = 0, u(1) = 1' )
   print ( '  mu =',my_mu )
 
-  #for my_grid in ( 10, 20, 30, 40, 50 ):
+  #for my_grid in ( 10, 20, 30, 40, 50, 100, 1000, 10000 ):
+  my_mu = 0.01
   my_grid = 10
-#    my_mu = 0.01
   convection_diffusion ( my_mu, my_grid )
 #
 #  Terminate.
