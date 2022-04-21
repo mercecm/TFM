@@ -19,5 +19,19 @@ plot (mesh)
 filename = ('Mesh2-%d x %d' %(a,b))
 plt.title('Transformation y=x**2')
 plt.savefig(filename)
-plt.show()
+plt.close()
 
+
+def mesh(n):
+  m = UnitIntervalMesh(n)
+  x = m.coordinates()
+#  x[:] = x[:]**2
+  return m
+
+N = 100
+my_mesh = mesh(N)
+plot(my_mesh)
+filename = 'UniformMesh%d' %N
+plt.title('Uniform mesh, grid %d' %N)
+plt.savefig(filename)
+plt.close()

@@ -22,13 +22,13 @@ def c_stationary(x,mu):
   return c
   
 def flux_exact(x,t,mu):
-  f_e = 1
-  f_t = (-1/2)*(-np.sqrt(mu/(np.pi*t))*np.exp(-(x+t)*(x+t)/(4*mu*t)) - np.sqrt(mu/(np.pi*t))*np.exp(-x/mu)*np.exp(-(x-t)*(x-t)/(4*mu*t)) + erfc((x+t)/np.sqrt(4*mu*t)))
+  f_e = -1
+  f_t = (1/2)*(-np.sqrt(mu/(np.pi*t))*np.exp(-(x+t)*(x+t)/(4*mu*t)) - np.sqrt(mu/(np.pi*t))*np.exp(-x/mu)*np.exp(-(x-t)*(x-t)/(4*mu*t)) + erfc((x+t)/np.sqrt(4*mu*t)))
   f = f_e + f_t
   return f
 
 def flux_stationary(x,mu):
-  f = np.exp(x-x)
+  f = -np.exp(x-x)
   return f
 
 def flux_surf(t,mu):
@@ -44,8 +44,8 @@ te = np.linspace(0.0,0.05,1000)
 fig = plt.figure ( )
 ax = plt.subplot ( 111 )
 plt.plot(te,flux_surf(te,mu), label = 'x = 0.0')
-plt.plot(te,flux_exact(x1,te,mu), label = 'x = %.3f' %x1)
-plt.plot(te,flux_exact(x2,te,mu), label = 'x = %.2f' %x2)
+plt.plot(te,-flux_exact(x1,te,mu), label = 'x = %.3f' %x1)
+plt.plot(te,-flux_exact(x2,te,mu), label = 'x = %.2f' %x2)
 ax.legend ( )
 plt.xlabel('Time')
 plt.ylabel('Flux')

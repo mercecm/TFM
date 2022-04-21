@@ -50,8 +50,8 @@ def boundary ( x ):
   value = x[0] < DOLFIN_EPS or 1.0 - DOLFIN_EPS < x[0]
   return value
   
-f = Expression("x[0]*x[0]", degree = 10)
-bc = DirichletBC (V, f, boundary)
+g = Expression('x[0]', degree = 10)
+bc = DirichletBC (V, g, boundary)
 
 #6. Solve
 t = 0
@@ -65,12 +65,12 @@ flux_2 = [None]*(m+1)
 
 while t<T:
   solve( F == 0 , u, bc)
-  flux = project(mu*u.dx(0)+u,FunctionSpace(mesh, 'CG', 2))
+  flux = project(-mu*u.dx(0)-u,V)
 
   u_n.assign(u)
-  flux_0[i] = flux(x0)
-  flux_1[i] = flux(x1)
-  flux_2[i] = flux(x2)
+  flux_0[i] = -flux(x0)
+  flux_1[i] = -flux(x1)
+  flux_2[i] = -flux(x2)
   i += 1
   t += dt
   
@@ -114,6 +114,7 @@ plt.xlabel('Time')
 plt.ylabel('Flux')
 ax.grid ( True )
 plt.title ( 'Flux in surface' )
+plt.ylim(0.75,6.5)
 filename = ( 'Flux_surf_grid%d.png' % ( n ) )
 plt.savefig ( filename )
 print ( '  Graphics saved as "%s"' % ( filename ) )
