@@ -29,10 +29,11 @@ M = 42.7*4*np.pi*1E-10
 rho = 997
 eta = 1E-3
 Re = (rho*wx*Lx)/eta
+#p0 = 101325/(rho*wx)
+p0 = 1
 
-#gradB = 30
-
-gradB = Expression('30*(1-x[0])', degree = 10)
+gradB = 30
+#gradB = Expression('30*(1-x[0])', degree = 10)
 ext_f = (Lx*c0*M*gradB)/(wx*wx)
 
 #Functions for mesh and Boundaries
@@ -41,6 +42,7 @@ def create_mesh(nx,ny,beta):
   m = RectangleMesh(Point(0.0,0.0), Point(1.0,beta), nx, ny)
   x = m.coordinates()
   x[:,0] = x[:,0]**2
+#  x[:,1] = (-2/(beta**2))*(x[:,1]**3)+(3/beta)*(x[:,1]**2)
   return m
 
 class BoundaryX0(SubDomain):
@@ -61,6 +63,8 @@ class BoundaryY1(SubDomain):
 
 #Mesh and function spaces
 mesh = create_mesh(nx,ny,beta)
+plot(mesh)
+plt.show()
 
 V = FunctionSpace(mesh, 'P', 2) #function space for concentration 
 W = VectorFunctionSpace(mesh, 'P', 2) #function space for velocity
@@ -106,22 +110,23 @@ bc_x1 = DirichletBC (V, g, boundary_markers, 1)
 bc_DA = [bc_x0, bc_x1]
 
 #Define Neumann BC of DA
-integrals_N = [-mu*w[1]*u*v*ds(2), -mu*w[1]*u*v*ds(3)]
+integrals_N = [-w[1]*u*v*ds(2), -w[1]*u*v*ds(3)]
 
 #Diffusion-advection equation
 
-F1 = (dot(w, grad(u))*v + mu*dot(grad(u), grad(v)) + ((u - u_n)/dt)*v)*dx + sum(integrals_N)
+F1 = (div(u*w)*v + mu*dot(grad(u), grad(v)) + ((u - u_n)/dt)*v)*dx + sum(integrals_N)
 
 #Define Dirichlet BC of NS
 
-bc_inflow = DirichletBC(Q, Constant(0), boundary_markers, 0)
-bc_outflow = DirichletBC(Q, Constant(0), boundary_markers, 1)
+#bc_inflow = DirichletBC(Q, p0, boundary_markers, 0)
+bc_outflow = DirichletBC(Q, p0, boundary_markers, 1)
 
-bc_noslip1 = DirichletBC(W, Constant((0, 0)), boundary_markers, 2)
-bc_noslip2 = DirichletBC(W, Constant((0, 0)), boundary_markers, 3)
+bc_noslip0 = DirichletBC(W, Constant((0,0)), boundary_markers, 0)
+bc_noslip1 = DirichletBC(W, Constant((0,0)), boundary_markers, 2)
+bc_noslip2 = DirichletBC(W, Constant((0,0)), boundary_markers, 3)
 
-bc_w = [bc_noslip1, bc_noslip2]
-bc_p = [bc_inflow, bc_outflow]
+bc_w = [bc_noslip0, bc_noslip1, bc_noslip2]
+bc_p = [bc_outflow]
 
 #Second order splitting algorithm for Navier-Stokes eqs
 n = FacetNormal(mesh) #normal vector to mesh
@@ -135,7 +140,7 @@ def epsilon(w):
 def sigma(w, p):
     return 2*(1/Re)*epsilon(w) - p*Identity(len(w))
 
-F2 = dot((w - w_n) / dt, z)*dx + dot(dot(w_n, nabla_grad(w_n)), z)*dx + inner(sigma(0.5*(w + w_n), p_n), epsilon(z))*dx + dot(p_n*n, z)*ds - (1/Re)*dot(nabla_grad(0.5*(w + w_n))*n,z)*ds - dot(f, z)*dx
+F2 = dot((w - w_n) / dt, z)*dx + dot(dot(w_n, nabla_grad(w_n)), z)*dx + inner(sigma(0.5*(w + w_n), p_n), epsilon(z))*dx + dot(p_n*n, z)*ds - (1/Re)*dot(nabla_grad(0.5*(w + w_n))*n,z)*ds - dot(f, z)*dx #- dot(dot(sigma(0.5*(w + w_n), p_n), n), z)*ds
 
 F3 = dot(grad(p), grad(q))*dx - dot(grad(p_n), grad(q))*dx + (1/dt)*div(w)*q*dx
 
