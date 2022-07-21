@@ -33,15 +33,15 @@ rho = 867 #997
 eta = 5E-4
 
 gradB_v = 30
-#gradB = -30
-gradB = Expression('-30*(1-x[0])', degree = 10)
+gradB = -30
+#gradB = Expression('-30*(1-x[0])', degree = 10)
 
 wx = (V*rhonp*M*gradB_v)/(6*np.pi*eta*R)
-ext_f = (c0*M*gradB)/(rho*wx*wx)
-
+wf = wx*60
+ext_f = (c0*M*gradB)/(rho*wf*wf)
 
 mu = D/(Lx*wx)
-Re = (rho*wx*Lx)/eta
+Re = (rho*wf*Lx)/eta
 
 print(wx)
 print(mu)
@@ -125,13 +125,13 @@ ds = Measure('ds', domain=mesh, subdomain_data=boundary_markers)
 #Define Dirichlet BC of DA
 #g = Expression('x[0]', degree = 10)
 bc_x0 = DirichletBC(V, 0, boundary_markers, 0)
-bc_x1 = DirichletBC(V, 1, boundary_markers, 1)
-bcD = [bc_x0, bc_x1]
+#bc_x1 = DirichletBC(V, 1, boundary_markers, 1)
+bcD = [bc_x0] #, bc_x1
 
 #Define Neumann BC of DA
 n = FacetNormal(mesh) #normal vector to mesh
 
-integrals_N = [-w2[1]*u*v*ds(2), -w2[1]*u*v*ds(3)]
+integrals_N = [-w2[1]*u*v*ds(2), -w2[1]*u*v*ds(3), -w2[0]*u*v*ds(1)]
 
 #Diffusion-advection equation
 
@@ -201,12 +201,12 @@ A4 = assemble(a4)
 
 while t<T:
 
-#	w2 = w_n + Constant((-1.0,0.0))
+#	w2 = (60)*w_n + Constant((-1.0,0.0))
 	w2 = w_n + w_m
 	b1 = assemble(L1)
 	[bc.apply(b1) for bc in bcD]
 	solve(A1, u_.vector(), b1)
-
+	
 	if i%60 == 0:
 		b2 = assemble(L2)
 		[bc.apply(b2) for bc in bcw]
@@ -221,7 +221,7 @@ while t<T:
 		solve(A4, w_.vector(), b4)
 		p_n.assign(p_)
 		w_n.assign(w_)
-
+	
 	u_n.assign(u_)
 
 	
