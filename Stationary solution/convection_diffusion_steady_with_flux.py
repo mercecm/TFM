@@ -128,40 +128,41 @@ def convection_diffusion ( my_mu, my_grid ):
 #
 #  Plot the solution (concentration).
 #
-#  fig = plt.figure ( )
-#  ax = plt.subplot ( 111 )
-#  plot (uh, label = 'Computed' )
-#  plot (u_exact, label = 'Exact' )
-#  ax.legend ( )
-#  ax.grid ( True )
-#  plt.title ( 'convection_diffusion solutions, grid %d' % ( my_grid ) )
-#  filename = ( 'convection_diffusion_solutions_1_grid%d.png' % ( my_grid ) )
-#  plt.savefig ( filename )
-#  print ( '  Graphics saved as "%s"' % ( filename ) )
-#  plt.close ( )
-#
+  fig = plt.figure ( )
+  ax = plt.subplot ( 111 )
+  plot (uh, label = 'Computed' )
+  plot (u_exact, label = 'Exact' )
+  ax.legend ( )
+  ax.grid ( True )
+  plt.title ( 'convection_diffusion solutions, grid %d' % ( my_grid ) )
+  filename = ( 'convection_diffusion_solutions_1_grid%d.png' % ( my_grid ) )
+  plt.savefig ( filename )
+  print ( '  Graphics saved as "%s"' % ( filename ) )
+  plt.close ( )
+
 #  Plot also the flux of particles 
-#
-#  fig = plt.figure ( )
-#  ax = plt.subplot ( 111 )
-#  plot (flux, label = 'Computed' )
-#  plot (flux_exact, label = 'Exact (1.0)' )
-#  ax.legend ( )
-#  ax.grid ( True )
-#  plt.title ( 'Flux, grid %d' % ( my_grid ) )
-#  filename = ( 'Flux_1_grid%d.png' % ( my_grid ) )
-#  plt.savefig ( filename )
-#  print ( '  Graphics saved as "%s"' % ( filename ) )
-#  plt.close ( )
-#
+
+  fig = plt.figure ( )
+  ax = plt.subplot ( 111 )
+  plot (flux, label = 'Computed' )
+  plot (flux_exact, label = 'Exact (1.0)' )
+  ax.legend ( )
+  ax.grid ( True )
+  plt.title ( 'Flux, grid %d' % ( my_grid ) )
+  filename = ( 'Flux_1_grid%d.png' % ( my_grid ) )
+  plt.savefig ( filename )
+  print ( '  Graphics saved as "%s"' % ( filename ) )
+  plt.close ( )
+
 # Save also to csv
 # by Mercè Clua
+  titles = zip('x', 'u', 'ue', 'f', 'fe')
   x_coord = V.tabulate_dof_coordinates()
   everything = zip(x_coord,uh.vector(),u_exact.vector(),flux.vector(),flux_exact.vector())
   f = open('Computed_%d_grid%d.csv' % (degree, my_grid), 'w')
   writer = csv.writer(f, delimiter = '\t')
+  writer.writerows(titles)
   writer.writerows(everything)
-  
 
 
 #  Terminate.
@@ -193,7 +194,7 @@ def convection_diffusion_test ( ):
 
   print ( time.ctime ( time.time() ) )
 # TEST VALUE FOR MU
-  my_mu = 0.01
+  my_mu = 0.1
 #
 #  Report level = only warnings or higher.
 #
@@ -209,10 +210,10 @@ def convection_diffusion_test ( ):
   print ( '  u(0) = 0, u(1) = 1' )
   print ( '  mu =',my_mu )
 
-  #for my_grid in ( 10, 20, 30, 40, 50, 100, 1000, 10000 ):
-  my_mu = 0.01
-  my_grid = 10
-  convection_diffusion ( my_mu, my_grid )
+  for my_grid in ( 10, 100):
+    my_mu = 0.1
+  #my_grid = 10
+    convection_diffusion ( my_mu, my_grid )
 #
 #  Terminate.
 #

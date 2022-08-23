@@ -6,19 +6,19 @@ import numpy as np
 import csv
 
  #***************************************************************************************************************************#
-#SIMULATES A 2D, CONVECTION DIFFUSION SYSTEM WHOSE VELOCITY FIELD IS OBTAINED THROUGH NAVIER-STOKES EQUATIONS UNDER A MAGNETIC GRADIENT #
+#SIMULATES A 2D, CONVECTION DIFFUSION SYSTEM WHOSE VELOCITY FIELD IS OBTAINED THROUGH NAVIER-STOKES EQUATIONS UNDER A CONSTANT MAGNETIC GRADIENT #
 #***************************************************************************************************************************#
 
 #Parameters
 nx = 50
 ny = 50
 
-T = 1 # final time
+T = 1.2 # final time
 dt = 1E-4
 m = int(T/dt) #integer division
 
-Lx = 0.03
-Ly = 0.015
+Lx = 0.015
+Ly = 0.0075
 beta = Ly/Lx
 rhonp = 4.86E3
 V = (4/3)*np.pi*(12E-9)*(12E-9)*(12E-9)/8
@@ -29,27 +29,20 @@ rho = 997
 eta = 8.9E-4
 kb = 1.380649E-23
 Temp = 300
-gamma = 1E3
+gamma = 60
 b = 68
-Br = 1.45
-r = 7E-3
-h = 1.5E-2
 
-gradB_v = -1*(Br*r*r/2)*(1/sqrt((h*h+r*r)*(h*h+r*r)*(h*h+r*r)) - 1/(r*r*r))
-B = Expression('(Br/2)*((Lx*x[0]+h)/sqrt((Lx*x[0]+h)*(Lx*x[0]+h)+r*r) - Lx*x[0]/(sqrt(Lx*x[0]*Lx*x[0] + r*r)))', Lx = Lx, r = r, h = h, Br = Br, degree = 10)
-gradB = Expression('(Br*r*r/2)*(1/sqrt(((Lx*x[0]+h)*(Lx*x[0]+h)+r*r)*((Lx*x[0]+h)*(Lx*x[0]+h)+r*r)*((Lx*x[0]+h)*(Lx*x[0]+h)+r*r))-1/sqrt((Lx*x[0]*Lx*x[0] + r*r)*(Lx*x[0]*Lx*x[0] + r*r)*(Lx*x[0]*Lx*x[0] + r*r)))', Lx = Lx, r = r, h = h, Br = Br, degree = 10)
-Lan = Expression('(1/tanh(B*b)) - (1/(B*b))', b = b, B = B, degree = 10)
+gradB = -60
+gradB_v = 60 #used to have wx>0
 
 D = kb*Temp/(6*np.pi*eta*R)
 wx = (V*rhonp*M*gradB_v)/(6*np.pi*eta*R)
 wf = wx*gamma
-p0 = 101325/(rho*wf*wf)
-ext_f = (Lx*c0*M*Lan*gradB)/(rho*wf*wf)
+ext_f = (c0*M*gradB)/(rho*wf*wf)
 
 mu = D/(Lx*wx)
 Re = (rho*wf*Lx)/eta
 
-print(D)
 print(wx)
 print(mu)
 print(Re)
@@ -95,7 +88,6 @@ v = TestFunction(V) #test for concentration
 
 w = TrialFunction(W) #velocity field
 w_n = Function(W)
-w_m = Function(W)
 w_ = Function(W)
 z = TestFunction(W)
 w2 = Function(W)
@@ -109,8 +101,7 @@ q = TestFunction(Q)
 #set initial conditions
 u_n.interpolate(Constant(1.0))
 w_n.interpolate(Constant((0.0,0.0)))
-w_m.interpolate(Expression(('(Lan*gradB)/(gradB_v)', '0.0'), Lan = Lan, gradB = gradB, gradB_v = gradB_v, degree = 10))
-w2 = project(gamma*w_n + w_m, W)
+w_m = Constant((-1.0,0.0))
 
 # Mark boundaries
 boundary_markers = MeshFunction("size_t", mesh, mesh.topology().dim()-1, 0)
@@ -129,17 +120,17 @@ ds = Measure('ds', domain=mesh, subdomain_data=boundary_markers)
 
 #Define Dirichlet BC of DA
 bc_x0 = DirichletBC(V, 0, boundary_markers, 0)
-#bc_x1 = DirichletBC(V, 1, boundary_markers, 1) #used if Dirichlet BC are set in x' = 1
-bcD = [bc_x0]#, bc_x1] 
+#bc_x1 = DirichletBC(V, 1, boundary_markers, 1) #Needed if Dirichlet BC in x' = 1 is set
+bcD = [bc_x0] #, bc_x1
 
 #Define Neumann BC of DA
 n = FacetNormal(mesh) #normal vector to mesh
 
-integrals_N = [-dot(w2,n)*u*v*ds(2), -dot(w2,n)*u*v*ds(3), -dot(w2,n)*u*v*ds(1)]
+integrals_N = [-dot((gamma*w_n + w_m),n)*u*v*ds(2), -dot((gamma*w_n + w_m),n)*u*v*ds(3), -dot((gamma*w_n + w_m),n)*u*v*ds(1)]
 
 #Diffusion-advection equation
 
-F1 = (div(u*w2)*v + mu*dot(grad(u), grad(v)) + ((u - u_n)/dt)*v)*dx + sum(integrals_N)
+F1 = (div(u*(gamma*w_n + w_m))*v + mu*dot(grad(u), grad(v)) + ((u - u_n)/dt)*v)*dx + sum(integrals_N)
 a1 = lhs(F1)
 L1 = rhs(F1)
 
@@ -164,7 +155,6 @@ def epsilon(w):
 # Define stress tensor
 def sigma(w, p):
     return 2*(1/Re)*epsilon(w) - p*Identity(len(w))
-
 dtf = dt*gamma
 
 F2 = dot((w - w_n) / dtf, z)*dx + dot(dot(w_n, nabla_grad(w_n)), z)*dx + inner(sigma(0.5*(w + w_n), p_n), epsilon(z))*dx + dot(p_n*n, z)*ds - (1/Re)*dot(nabla_grad(0.5*(w + w_n))*n,z)*ds - dot(f, z)*dx - dot(dot(sigma(0.5*(w + w_n), p_n), n), z)*ds
@@ -181,7 +171,7 @@ L4 = dot(w_n,z)*dx - dtf*dot(grad(p_-p_n),z)*dx
 
 #Solve
 
-header = ['t', 'x', 'y', 'u', 'wx', 'wy'] #'flux x', 'flux y', 
+header = ['t', 'x', 'y', 'u', 'wx', 'wy', 'wx plot', 'wy plot']
 
 out = open('magnetophoresis.csv', 'w')
 writer = csv.writer(out, delimiter = '\t')
@@ -199,10 +189,9 @@ A4 = assemble(a4)
 [bc.apply(A1) for bc in bcD]
 [bc.apply(A2) for bc in bcw]
 
-
 while t<T:
-
 	w2 = project(w_m + gamma*w_n, W)
+
 	b1 = assemble(L1)
 	[bc.apply(b1) for bc in bcD]
 	solve(A1, u_.vector(), b1)
@@ -221,41 +210,30 @@ while t<T:
 		solve(A4, w_.vector(), b4)
 		p_n.assign(p_)
 		w_n.assign(w_)
-
+	
 	u_n.assign(u_)
 
 	
-	if i%250 == 0:
+	if i%100 == 0:
 		fig = plt.figure ( )
 		ax = plt.subplot ( 111 )
 		c = plot (u_n, mode='color', vmin=0, vmax=1)
 		ax.grid ( True )
 		plt.xticks(fontsize = 11)
 		plt.yticks(fontsize = 11)
-		plt.xlabel('Position x\'', fontsize = 12)
-		plt.ylabel('Position y\'', fontsize = 12)
-		plt.title ( 'Concentration, time %.4f' % ( t ), fontsize = 13 )
+		plt.xlabel('Position x', fontsize = 12)
+		plt.ylabel('Position y', fontsize = 12)
+		plt.title ( 'Concentration, time step %.4f' % ( t ), fontsize = 13 )
 		plt.colorbar(c, orientation = 'horizontal', pad = 0.2)
 		filename = ( 'couple_%.4f.png' % ( t ) )
 		plt.savefig ( filename )
 		plt.close( )
-				
+
 		w_x,w_y = w_n.split(deepcopy = True)
 
-		fig2 = plt.figure ( )
-		plt.xticks(fontsize = 11)
-		plt.yticks(fontsize = 11)		
-		d = plot(w2, mode = 'glyphs')
-		plt.xlabel('Position x\'', fontsize = 12)
-		plt.ylabel('Position y\'', fontsize = 12)
-		plt.title ( 'Velocity field, time %.4f' % ( t ), fontsize = 13 )
-		plt.colorbar(d, orientation = 'horizontal', pad = 0.2)
-		plt.savefig ( 'velocity_%.4f.png' % ( t ) )
-		plt.close()
-		
 		x_coord = V.tabulate_dof_coordinates()
 		time = [t]*len(x_coord)
-		everything = zip(time, x_coord[:,0], x_coord[:,1], u_.vector(),  w_x.vector(), w_y.vector())
+		everything = zip(time, x_coord[:,0], x_coord[:,1], u_.vector(),  w_x.vector(), w_y.vector(), w_x.vector()*1E-9, w_y.vector()*1E-9)
 		writer.writerows(everything)
   
 
@@ -274,7 +252,7 @@ writer = csv.writer(final, delimiter = '\t')
 writer.writerow(header)
 x_coord = V.tabulate_dof_coordinates()
 time = [t]*len(x_coord)
-everything = zip(time, x_coord[:,0], x_coord[:,1], u_.vector(), w_x.vector(), w_y.vector())
+everything = zip(time, x_coord[:,0], x_coord[:,1], u_.vector(), w_x.vector(), w_y.vector())  
 writer.writerows(everything)
 final.close()
 
@@ -291,3 +269,9 @@ plt.colorbar(c, orientation = 'horizontal', pad = 0.2)
 filename = ( 'couple_final.png' )
 plt.savefig ( filename )
 plt.close( )
+
+
+
+
+
+
