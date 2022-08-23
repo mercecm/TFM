@@ -70,6 +70,7 @@ flux_2 = [[None,None]]*(m+1)
 
 F = ( u.dx(0)*v - mu*dot(grad(u), grad(v)) - ((u - u_n)/dt)*v - f*v )*dx
 
+
 f = open('CDeqPBC_%d_x_%d.csv' % ( nx, ny ), 'w')
 titles = ['t, x, y, u, fx, fy']
 writer = csv.writer(f, delimiter = '\t')
@@ -100,7 +101,6 @@ while t<T:
     plt.colorbar(c, orientation = 'horizontal', pad = 0.2)
     filename = ( 'CDeqPBC_%.3f.png' % ( t ) )
     plt.savefig ( filename )
-    #print ( '  Graphics saved as "%s"' % ( filename ) )
     plt.close( )
   
   u_n.assign(u)

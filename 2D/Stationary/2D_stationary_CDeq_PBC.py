@@ -31,14 +31,12 @@ class PeriodicBoundary(SubDomain):
         y[0] = x[0] - 1.0
         y[1] = x[1]
 
-
 Lx = 0.05
 Ly = 0.025
 wx = 0.16E-6
 wy = 0.0
 D = 4.3E-11
 mu = D/(Lx*wx)
-#mu = 0.05
 beta = Ly/Lx
 f = 0.0
 
@@ -77,7 +75,6 @@ plt.xlabel('Position x\'', fontsize = 12)
 plt.ylabel('Position y\'', fontsize = 12)
 plt.grid ( True )
 plt.title ( 'Concentration, grid %d x %d' % ( nx, ny ), fontsize = 13 )
-plt.colorbar(c, orientation = 'horizontal', pad = 0.2)
 filename = ( 'CDeqPBC_beta%.1f.png' % ( beta ) )
 plt.savefig ( filename )
 print ( '  Graphics saved as "%s"' % ( filename ) )

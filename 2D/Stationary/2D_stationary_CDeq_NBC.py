@@ -4,7 +4,6 @@ from fenics import *
 import matplotlib.pyplot as plt
 import numpy as np
 import csv
-#from boxfield import *
 
 def create_mesh(nx,ny,beta):
   m = RectangleMesh(Point(0.0,0.0), Point(1.0,beta), nx, ny)
@@ -30,7 +29,6 @@ f = 0.0
 nx = 50
 ny = 50
 mesh = create_mesh(nx,ny,beta)
-
 
 V = FunctionSpace(mesh, 'CG', 2)
 v = TestFunction(V)
